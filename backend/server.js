@@ -7,6 +7,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import travelRoutes from './routes/travelRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
+import favoriteRoutes from './routes/favoriteRoutes.js';
 
 // Configure dotenv
 dotenv.config();
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/travel', travelRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 // Base Endpoint
 app.get('/', (req, res) => {

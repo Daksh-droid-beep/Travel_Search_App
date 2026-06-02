@@ -3,11 +3,21 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Verify from './pages/Verify';
+import Favorites from './pages/Favorites';
 import { Compass, Loader } from 'lucide-react';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [page, setPage] = useState('home');
+  const [searchResult, setSearchResult] = useState(null);
+
+  // Handle initial page routing for email verification link redirects
+  useEffect(() => {
+    if (window.location.pathname === '/verify') {
+      setPage('verify');
+    }
+  }, []);
 
   // Handle auto-routing transitions when auth state hydrates
   useEffect(() => {
@@ -15,15 +25,15 @@ function AppContent() {
       if (user) {
         setPage('home');
       } else {
-        // Allow browsing home as guest, but route to login if they log out
-        if (page === 'login' || page === 'signup') {
-          // Stay on auth pages
+        // Allow browsing home as guest, but route to login/signup/verify correctly
+        if (page === 'login' || page === 'signup' || page === 'verify') {
+          // Stay on these pages
         } else {
           setPage('home');
         }
       }
     }
-  }, [user, loading]);
+  }, [user, loading, page]);
 
   // Premium loading launcher screen
   if (loading) {
@@ -52,9 +62,13 @@ function AppContent() {
       return <Login setPage={setPage} />;
     case 'signup':
       return <Signup setPage={setPage} />;
+    case 'verify':
+      return <Verify setPage={setPage} />;
+    case 'favorites':
+      return <Favorites setPage={setPage} setSearchResult={setSearchResult} />;
     case 'home':
     default:
-      return <Home setPage={setPage} />;
+      return <Home setPage={setPage} searchResult={searchResult} setSearchResult={setSearchResult} />;
   }
 }
 

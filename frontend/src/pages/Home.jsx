@@ -9,9 +9,8 @@ import { Compass, Shield, HelpCircle, Heart, Globe, DollarSign, Sparkles } from 
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export default function Home({ setPage }) {
+export default function Home({ setPage, searchResult, setSearchResult }) {
   const { user } = useAuth();
-  const [searchResult, setSearchResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [historyTrigger, setHistoryTrigger] = useState(0);

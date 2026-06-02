@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import jwt from 'jsonwebtoken';
 import SearchHistory from '../models/SearchHistory.js';
+import { getDestinationImages } from '../utils/imageUtil.js';
+import { getDestinationWeather } from '../utils/weatherUtil.js';
 
 // Initialize Gemini AI
 const getGenAIModel = () => {
@@ -125,6 +127,21 @@ export const searchDestination = async (req, res) => {
     } else {
       // No API key, use premium mock data directly
       resultData = getMockTravelData(query);
+    }
+
+    // Dynamic Weather, Image, and Coordinate resolution
+    try {
+      const images = await getDestinationImages(query);
+      const weatherData = await getDestinationWeather(query);
+
+      resultData.images = images;
+      resultData.weather = weatherData.current;
+      resultData.forecast = weatherData.forecast;
+      resultData.coordinates = weatherData.coordinates;
+      resultData.displayName = weatherData.displayName || query;
+      resultData.country = weatherData.country || '';
+    } catch (enrichError) {
+      console.error('Error enriching destination details:', enrichError);
     }
 
     // Try to extract user ID from JWT if logged in

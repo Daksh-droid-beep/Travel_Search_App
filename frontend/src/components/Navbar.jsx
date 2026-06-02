@@ -1,8 +1,8 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Compass, LogOut, History, User } from 'lucide-react';
+import { Compass, LogOut, History, User, Heart } from 'lucide-react';
 
-export default function Navbar({ setPage, onToggleHistory, isHistoryOpen }) {
+export default function Navbar({ setPage, onToggleHistory, isHistoryOpen, hideHistoryToggle = false }) {
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
@@ -25,21 +25,32 @@ export default function Navbar({ setPage, onToggleHistory, isHistoryOpen }) {
           </div>
 
           {/* User Section / Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {user ? (
               <>
-                {/* Search History Toggle */}
+                {/* Bookmarks link */}
                 <button
-                  onClick={onToggleHistory}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-sm font-semibold transition-all duration-300 ${
-                    isHistoryOpen
-                      ? 'bg-teal-500/15 border-teal-500/30 text-teal-300'
-                      : 'bg-white/5 border-white/5 text-gray-300 hover:bg-white/10 hover:border-white/10'
-                  }`}
+                  onClick={() => setPage('favorites')}
+                  className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white/5 border border-white/5 text-gray-300 hover:bg-white/10 hover:border-white/10 text-sm font-semibold transition-all duration-300"
                 >
-                  <History className="w-4 h-4" />
-                  <span className="hidden sm:inline">Search History</span>
+                  <Heart className="w-4 h-4 text-rose-400 fill-rose-500/20" />
+                  <span className="hidden sm:inline">Bookmarks</span>
                 </button>
+
+                {/* Search History Toggle */}
+                {!hideHistoryToggle && (
+                  <button
+                    onClick={onToggleHistory}
+                    className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl border text-sm font-semibold transition-all duration-300 ${
+                      isHistoryOpen
+                        ? 'bg-teal-500/15 border-teal-500/30 text-teal-300'
+                        : 'bg-white/5 border-white/5 text-gray-300 hover:bg-white/10 hover:border-white/10'
+                    }`}
+                  >
+                    <History className="w-4 h-4" />
+                    <span className="hidden sm:inline">Search History</span>
+                  </button>
+                )}
 
                 {/* Profile Bubble */}
                 <div className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">

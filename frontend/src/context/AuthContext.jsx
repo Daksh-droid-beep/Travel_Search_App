@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }) => {
 
   // Register User
   const signup = async (name, email, password) => {
-    setLoading(true);
     clearError();
     try {
       const res = await fetch(`${API_URL}/auth/register`, {
@@ -68,20 +67,16 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Registration failed');
       }
 
-      localStorage.setItem('travel_token', data.token);
-      setUser(data);
+      // Registration only triggers a verification mail, it does not automatically log in
       return data;
     } catch (err) {
       setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
   // Login User
   const login = async (email, password) => {
-    setLoading(true);
     clearError();
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
@@ -95,7 +90,11 @@ export const AuthProvider = ({ children }) => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
+        // Attach needsVerification flag to the error so the Login page can detect it
+        const err = new Error(data.message || 'Login failed');
+        err.needsVerification = data.needsVerification || false;
+        err.email = data.email || email;
+        throw err;
       }
 
       localStorage.setItem('travel_token', data.token);
@@ -104,8 +103,29 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  // Resend Verification Email
+  const resendVerification = async (email) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to resend verification email');
+      }
+
+      return data;
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -126,6 +146,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         clearError,
+        resendVerification,
       }}
     >
       {children}
