@@ -23,7 +23,10 @@ function AppContent() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        setPage('home');
+        // Redirect to home only if we are currently on an authentication page
+        if (page === 'login' || page === 'signup' || page === 'verify') {
+          setPage('home');
+        }
       } else {
         // Allow browsing home as guest, but route to login/signup/verify correctly
         if (page === 'login' || page === 'signup' || page === 'verify') {

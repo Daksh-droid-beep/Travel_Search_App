@@ -11,6 +11,14 @@ export default function DestinationCard({ destination }) {
   const [isSaved, setIsSaved] = useState(false);
   const [favId, setFavId] = useState(null);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [notification, setNotification] = useState(null);
+
+  const showToast = (msg, type = 'success') => {
+    setNotification({ message: msg, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  };
 
   if (!destination || !destination.result) return null;
 
@@ -79,7 +87,7 @@ export default function DestinationCard({ destination }) {
   // Toggle saving/removing bookmark
   const handleToggleBookmark = async () => {
     if (!user) {
-      alert('Please log in or sign up to bookmark your favorite travel destinations!');
+      showToast('Please log in or sign up to bookmark destinations!', 'error');
       return;
     }
 
@@ -98,6 +106,7 @@ export default function DestinationCard({ destination }) {
         if (res.ok) {
           setIsSaved(false);
           setFavId(null);
+          showToast('Destination removed from bookmarks!', 'success');
         } else {
           throw new Error('Failed to delete bookmark');
         }
@@ -119,13 +128,14 @@ export default function DestinationCard({ destination }) {
           const data = await res.json();
           setIsSaved(true);
           setFavId(data.favorite._id);
+          showToast('Destination saved to bookmarks successfully!', 'success');
         } else {
           throw new Error('Failed to save bookmark');
         }
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to modify your bookmarks shelf. Please try again.');
+      showToast('Failed to modify bookmarks. Please try again.', 'error');
     } finally {
       setBookmarkLoading(false);
     }
@@ -326,6 +336,22 @@ export default function DestinationCard({ destination }) {
         </div>
 
       </div>
+
+      {/* Toast Notification */}
+      {notification && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center space-x-3.5 px-4 py-3 rounded-2xl border shadow-2xl animate-slide-in backdrop-blur-md ${
+          notification.type === 'error'
+            ? 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+            : 'bg-teal-500/10 border-teal-500/20 text-teal-300'
+        }`}>
+          <div className={`p-1.5 rounded-lg ${
+            notification.type === 'error' ? 'bg-rose-500/10' : 'bg-teal-500/10'
+          }`}>
+            <Heart className={`w-4 h-4 ${notification.type === 'error' ? 'text-rose-400' : 'text-teal-400 fill-teal-400/20'}`} />
+          </div>
+          <span className="text-xs font-bold tracking-wide">{notification.message}</span>
+        </div>
+      )}
     </div>
   );
 }

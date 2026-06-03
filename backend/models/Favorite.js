@@ -16,6 +16,27 @@ const favoriteSchema = new mongoose.Schema(
       type: Object,
       required: true,
     },
+    destinationName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    country: {
+      type: String,
+      default: '',
+    },
+    imageUrl: {
+      type: String,
+      default: '',
+    },
+    coordinates: {
+      type: Object,
+      default: null,
+    },
+    savedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,

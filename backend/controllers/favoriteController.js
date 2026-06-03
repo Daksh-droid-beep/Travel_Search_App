@@ -18,10 +18,21 @@ export const addFavorite = async (req, res) => {
       return res.status(400).json({ message: 'Destination is already saved in favorites' });
     }
 
+    // Extract detailed fields from the result
+    const destinationName = result.location || query;
+    const country = result.country || '';
+    const imageUrl = result.images?.hero || '';
+    const coordinates = result.coordinates || null;
+
     const favorite = await Favorite.create({
       userId,
       query,
       result,
+      destinationName,
+      country,
+      imageUrl,
+      coordinates,
+      savedAt: new Date()
     });
 
     res.status(201).json({
@@ -79,5 +90,21 @@ export const removeFavorite = async (req, res) => {
   } catch (error) {
     console.error('Remove Favorite Error:', error);
     res.status(500).json({ message: 'Server error removing bookmark' });
+  }
+};
+
+// @desc    Clear all favorites for the logged-in user
+// @route   DELETE /api/favorites
+// @access  Private
+export const clearAllFavorites = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await Favorite.deleteMany({ userId });
+
+    res.json({ message: 'All bookmarks cleared successfully' });
+  } catch (error) {
+    console.error('Clear All Favorites Error:', error);
+    res.status(500).json({ message: 'Server error clearing bookmarks' });
   }
 };
