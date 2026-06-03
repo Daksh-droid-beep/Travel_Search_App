@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import jwt from 'jsonwebtoken';
 import SearchHistory from '../models/SearchHistory.js';
+import ChatHistory from '../models/ChatHistory.js';
 import { getDestinationImages } from '../utils/imageUtil.js';
 import { getDestinationWeather } from '../utils/weatherUtil.js';
 
@@ -20,6 +21,8 @@ const getMockTravelData = (query) => {
   const q = query.toLowerCase().trim();
   const db = {
     paris: {
+      location: 'Paris',
+      country: 'France',
       overview: 'Paris, France’s capital, is a major European city and a global center for art, fashion, gastronomy and culture. Its 19th-century cityscape is crisscrossed by wide boulevards and the River Seine. Beyond such landmarks as the Eiffel Tower and the 12th-century, Gothic Notre-Dame cathedral, the city is known for its cafe culture and designer boutiques along the Rue du Faubourg Saint-Honoré.',
       bestTime: 'The best time to visit Paris is from April to June and October to November, when the weather is mild and pleasant, and tourist crowds are smaller compared to summer.',
       attractions: ['Eiffel Tower', 'Louvre Museum', 'Cathédrale Notre-Dame de Paris', 'Arc de Triomphe', 'Champs-Élysées'],
@@ -30,6 +33,8 @@ const getMockTravelData = (query) => {
       }
     },
     tokyo: {
+      location: 'Tokyo',
+      country: 'Japan',
       overview: 'Tokyo, Japan’s bustling capital, mixes ultra-modern neon-lit skyscrapers with historic Shinto shrines and temples. The opulent Meiji Shinto Shrine is known for its towering gate and surrounding woods. The Imperial Palace sits amid large public gardens. The city is also famous for its world-class food, anime culture, and incredibly efficient public transportation.',
       bestTime: 'March to April (Cherry Blossom season) and September to November (Autumn leaves) offer the most comfortable weather and scenic outdoor views.',
       attractions: ['Sensō-ji Temple', 'Shibuya Crossing', 'Tokyo Skytree', 'Meiji Jingu Shrine', 'Tsukiji Outer Market'],
@@ -40,6 +45,8 @@ const getMockTravelData = (query) => {
       }
     },
     bali: {
+      location: 'Bali',
+      country: 'Indonesia',
       overview: 'Bali, Indonesia, is a tropical paradise renowned for its forested volcanic mountains, iconic rice paddies, pristine beaches, and vibrant coral reefs. The island is home to highly spiritual religious sites such as cliffside Uluwatu Temple. With its rich cultural heritage, world-class yoga retreats, and lively surf scenes, Bali offers a perfect mix of relaxation and adventure.',
       bestTime: 'The dry season from April to October is the best time to visit Bali. The weather is warm, dry, and perfect for beach activities, hiking, and diving.',
       attractions: ['Uluwatu Temple', 'Ubud Monkey Forest', 'Mount Batur Sunrise Trek', 'Tegallalang Rice Terraces', 'Seminyak Beach'],
@@ -60,6 +67,8 @@ const getMockTravelData = (query) => {
 
   // Default generic fallback if no match
   return {
+    location: query.charAt(0).toUpperCase() + query.slice(1),
+    country: '',
     overview: `${query} is an incredible travel destination offering visitors a unique cultural tapestry, breathtaking local landscapes, and warm hospitality. It features rich local history, spectacular scenic photo opportunities, and deep traditions waiting to be explored.`,
     bestTime: 'Spring (March to May) and Autumn (September to November) are generally ideal times to visit for pleasant weather, vibrant foliage, and comfortable sightseeing temperatures.',
     attractions: ['Historical City Center', 'Local Scenic Viewpoint', 'Traditional Culinary Market', 'Cultural Heritage Museum', 'Scenic Nature Park / Beach Area'],
@@ -93,6 +102,8 @@ export const searchDestination = async (req, res) => {
 
           Structure:
           {
+            "location": "The corrected, canonical, and properly capitalized name of the location (e.g. 'Kerala' if user typed 'kerela', or 'New York City' for 'nyc').",
+            "country": "The name of the country where this destination is located (e.g. 'India' for Kerala).",
             "overview": "A detailed, engaging, and premium overview of the destination.",
             "bestTime": "The absolute best months or seasons to visit, with a brief explanation of why.",
             "attractions": ["Top Attraction 1", "Top Attraction 2", "Top Attraction 3", "Top Attraction 4", "Top Attraction 5"],
@@ -129,17 +140,21 @@ export const searchDestination = async (req, res) => {
       resultData = getMockTravelData(query);
     }
 
-    // Dynamic Weather, Image, and Coordinate resolution
+    // Dynamic Weather, Image, and Coordinate resolution utilizing spell-corrected location name
     try {
-      const images = await getDestinationImages(query);
-      const weatherData = await getDestinationWeather(query);
+      const correctedLocation = resultData.location || query;
+      const correctedCountry = resultData.country || '';
+      const searchTarget = correctedCountry ? `${correctedLocation}, ${correctedCountry}` : correctedLocation;
+
+      const images = await getDestinationImages(correctedLocation);
+      const weatherData = await getDestinationWeather(searchTarget);
 
       resultData.images = images;
       resultData.weather = weatherData.current;
       resultData.forecast = weatherData.forecast;
       resultData.coordinates = weatherData.coordinates;
-      resultData.displayName = weatherData.displayName || query;
-      resultData.country = weatherData.country || '';
+      resultData.displayName = weatherData.displayName || correctedLocation;
+      resultData.country = weatherData.country || correctedCountry;
     } catch (enrichError) {
       console.error('Error enriching destination details:', enrichError);
     }
@@ -179,7 +194,7 @@ export const searchDestination = async (req, res) => {
 
 // @desc    Conversational AI Travel Assistant
 // @route   POST /api/travel/chat
-// @access  Public
+// @access  Public (Optionally records chat history for authenticated users)
 export const chatAssistant = async (req, res) => {
   try {
     const { message, chatHistory } = req.body;
@@ -189,38 +204,62 @@ export const chatAssistant = async (req, res) => {
     }
 
     const model = getGenAIModel();
+    let reply = '';
 
     if (!model) {
       // Friendly assistant response when API key is missing
-      return res.json({
-        reply: `Hello! I would love to help you plan your travels. To unlock my fully dynamic AI travel brains, please configure the \`GEMINI_API_KEY\` in the backend \`.env\` file! 
+      reply = `Hello! I would love to help you plan your travels. To unlock my fully dynamic AI travel brains, please configure the \`GEMINI_API_KEY\` in the backend \`.env\` file! 
 
 However, as a seasoned travel advisor, here is a quick tip: Always pack a light power bank, keep digital copies of your passport in the cloud, and try to learn at least 5 local words (Hello, Please, Thank you, How much, Excuse me) before landing. 
 
-Where would you like to travel next? I can still give you guides on destinations like Paris, Tokyo, and Bali!`,
-      });
-    }
-
-    // Build conversation context
-    let contextPrompt = `You are a friendly, helpful, and highly knowledgeable travel assistant named WanderLust AI.
+Where would you like to travel next? I can still give you guides on destinations like Paris, Tokyo, and Bali!`;
+    } else {
+      // Build conversation context
+      let contextPrompt = `You are a friendly, helpful, and highly knowledgeable travel assistant named WanderLust AI.
 Your goal is to help users plan trips, suggest destinations, give packing lists, share cultural tips, and answer all travel queries in an inspiring, professional tone. 
 Be concise but packed with exciting travel insights!
 
 Conversation History:
 `;
 
-    if (chatHistory && Array.isArray(chatHistory)) {
-      chatHistory.forEach((msg) => {
-        const role = msg.sender === 'user' ? 'User' : 'WanderLust AI';
-        contextPrompt += `${role}: ${msg.text}\n`;
-      });
+      if (chatHistory && Array.isArray(chatHistory)) {
+        chatHistory.forEach((msg) => {
+          const role = msg.sender === 'user' ? 'User' : 'WanderLust AI';
+          contextPrompt += `${role}: ${msg.text}\n`;
+        });
+      }
+
+      contextPrompt += `User: ${message}\n`;
+      contextPrompt += `WanderLust AI:`;
+
+      const result = await model.generateContent(contextPrompt);
+      reply = result.response.text().trim();
     }
 
-    contextPrompt += `User: ${message}\n`;
-    contextPrompt += `WanderLust AI:`;
+    // Try to extract user ID from JWT if logged in to save chat history
+    let userId = null;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      try {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_travel_key_123456!');
+        userId = decoded.id;
+      } catch (authError) {
+        console.log('Skipping chat history save: unauthenticated/invalid token');
+      }
+    }
 
-    const result = await model.generateContent(contextPrompt);
-    const reply = result.response.text().trim();
+    // Save chat interaction in MongoDB if authenticated user
+    if (userId) {
+      try {
+        await ChatHistory.create({
+          userId,
+          userQuestion: message.trim(),
+          aiResponse: reply
+        });
+      } catch (dbError) {
+        console.error('Failed to save chat history in MongoDB:', dbError);
+      }
+    }
 
     res.json({ reply });
   } catch (error) {

@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes.js';
 import travelRoutes from './routes/travelRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
 import favoriteRoutes from './routes/favoriteRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 // Configure dotenv
 dotenv.config();
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/travel', travelRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Base Endpoint
 app.get('/', (req, res) => {
