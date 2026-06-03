@@ -55,18 +55,18 @@ export default function Signup({ setPage }) {
 
       <div className="w-full max-w-md glass-panel p-8 rounded-2xl glow-teal border border-white/10 z-10">
         {isSubmitted ? (
-          /* Verification Success Pending Screen */
+          /* Registration Success Screen */
           <div className="text-center py-4 font-sans animate-scale-up">
             <div className="inline-flex items-center justify-center p-4 rounded-full bg-teal-500/10 text-teal-400 mb-6 border border-teal-500/20 shadow-lg shadow-teal-500/5">
               <CheckCircle2 className="w-12 h-12" />
             </div>
             
             <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-teal-200 to-cyan-300 bg-clip-text text-transparent mb-4">
-              Check Your Inbox!
+              Registration Successful!
             </h2>
             
             <p className="text-gray-300 text-sm leading-relaxed mb-8">
-              Verification email sent to <span className="text-teal-300 font-semibold">{email}</span>. Please check your inbox (or your developer terminal console if testing locally) for a secure verification link to activate your account.
+              Your account has been created successfully. You can now proceed to log in with your credentials.
             </p>
             
             <button

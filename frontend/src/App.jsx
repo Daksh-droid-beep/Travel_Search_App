@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import Verify from './pages/Verify';
 import Favorites from './pages/Favorites';
 import { Compass, Loader } from 'lucide-react';
 
@@ -12,24 +11,17 @@ function AppContent() {
   const [page, setPage] = useState('home');
   const [searchResult, setSearchResult] = useState(null);
 
-  // Handle initial page routing for email verification link redirects
-  useEffect(() => {
-    if (window.location.pathname === '/verify') {
-      setPage('verify');
-    }
-  }, []);
-
   // Handle auto-routing transitions when auth state hydrates
   useEffect(() => {
     if (!loading) {
       if (user) {
         // Redirect to home only if we are currently on an authentication page
-        if (page === 'login' || page === 'signup' || page === 'verify') {
+        if (page === 'login' || page === 'signup') {
           setPage('home');
         }
       } else {
-        // Allow browsing home as guest, but route to login/signup/verify correctly
-        if (page === 'login' || page === 'signup' || page === 'verify') {
+        // Allow browsing home as guest, but route to login/signup correctly
+        if (page === 'login' || page === 'signup') {
           // Stay on these pages
         } else {
           setPage('home');
@@ -65,8 +57,6 @@ function AppContent() {
       return <Login setPage={setPage} />;
     case 'signup':
       return <Signup setPage={setPage} />;
-    case 'verify':
-      return <Verify setPage={setPage} />;
     case 'favorites':
       return <Favorites setPage={setPage} setSearchResult={setSearchResult} />;
     case 'home':

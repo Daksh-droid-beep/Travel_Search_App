@@ -106,28 +106,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Resend Verification Email
-  const resendVerification = async (email) => {
-    try {
-      const res = await fetch(`${API_URL}/auth/resend-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to resend verification email');
-      }
-
-      return data;
-    } catch (err) {
-      throw err;
-    }
-  };
 
   // Logout User
   const logout = () => {
@@ -146,7 +125,6 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         clearError,
-        resendVerification,
       }}
     >
       {children}

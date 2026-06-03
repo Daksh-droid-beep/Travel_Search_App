@@ -6,24 +6,17 @@ export default function Login({ setPage }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
-  const [needsVerification, setNeedsVerification] = useState(false);
-  const [verificationEmail, setVerificationEmail] = useState('');
-  const [resendStatus, setResendStatus] = useState(''); // 'sending' | 'sent' | 'error'
   const [loading, setLoading] = useState(false);
-  const { login, error, clearError, resendVerification } = useAuth();
+  const { login, error, clearError } = useAuth();
 
   useEffect(() => {
     clearError();
     setLocalError('');
-    setNeedsVerification(false);
-    setResendStatus('');
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLocalError('');
-    setNeedsVerification(false);
-    setResendStatus('');
 
     if (!email || !password) {
       setLocalError('Please fill in all fields');
@@ -35,22 +28,9 @@ export default function Login({ setPage }) {
       await login(email, password);
       setPage('home');
     } catch (err) {
-      if (err.needsVerification) {
-        setNeedsVerification(true);
-        setVerificationEmail(err.email || email);
-      }
+      // Login error will be shown via error context state
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResendVerification = async () => {
-    setResendStatus('sending');
-    try {
-      await resendVerification(verificationEmail);
-      setResendStatus('sent');
-    } catch (err) {
-      setResendStatus('error');
     }
   };
 
@@ -72,51 +52,8 @@ export default function Login({ setPage }) {
           <p className="text-gray-400 mt-2 font-medium">Log in to unlock your custom travel plans</p>
         </div>
 
-        {/* Verification Required Warning Banner */}
-        {needsVerification && (
-          <div className="mb-6 p-5 bg-amber-500/10 border border-amber-500/20 rounded-xl animate-scale-up">
-            <div className="flex items-start space-x-3 mb-4">
-              <div className="p-2 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
-                <MailCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-amber-200 text-sm font-bold mb-1">Email Not Verified</p>
-                <p className="text-gray-400 text-xs leading-relaxed">
-                  Your account for <span className="text-amber-300 font-semibold">{verificationEmail}</span> needs email verification. Check your inbox or click below to resend the verification link.
-                </p>
-              </div>
-            </div>
-
-            {resendStatus === 'sent' ? (
-              <div className="flex items-center space-x-2 text-emerald-400 text-sm font-semibold bg-emerald-500/10 px-4 py-2.5 rounded-lg border border-emerald-500/20">
-                <MailCheck className="w-4 h-4" />
-                <span>Verification email resent! Check your inbox.</span>
-              </div>
-            ) : resendStatus === 'error' ? (
-              <div className="text-rose-300 text-xs font-semibold bg-rose-500/10 px-4 py-2.5 rounded-lg border border-rose-500/20">
-                Failed to resend. Please try again.
-              </div>
-            ) : (
-              <button
-                onClick={handleResendVerification}
-                disabled={resendStatus === 'sending'}
-                className="w-full py-2.5 px-4 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 text-amber-300 text-sm font-bold rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 disabled:opacity-50"
-              >
-                {resendStatus === 'sending' ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4" />
-                    <span>Resend Verification Email</span>
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Generic Errors (not verification-related) */}
-        {!needsVerification && (localError || error) && (
+        {/* Errors */}
+        {(localError || error) && (
           <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start space-x-3 text-rose-200 text-sm animate-pulse-glow" style={{ animationDuration: '6s' }}>
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <span>{localError || error}</span>
